@@ -1,108 +1,186 @@
-# Previsão de Demanda de Bicicletas com Prophet
+# Previsão da Demanda de Bicicletas com Séries Temporais
 
-## Objetivo
+## Sobre o projeto
 
-Este projeto tem como objetivo analisar a demanda diária por bicicletas compartilhadas e desenvolver um modelo de previsão de séries temporais capaz de capturar tendências de longo prazo, padrões sazonais e o comportamento típico da demanda. A análise considera fatores climáticos, efeitos de calendário e diferentes estratégias de modelagem, avaliando o impacto dessas decisões na performance preditiva.
+A previsão da demanda é um dos principais desafios enfrentados por serviços de compartilhamento de bicicletas, pois influencia diretamente o planejamento operacional, a distribuição das bicicletas e a qualidade do serviço oferecido aos usuários.
 
----
+O objetivo deste projeto é analisar os fatores que influenciam a demanda diária por bicicletas compartilhadas e desenvolver modelos de previsão utilizando séries temporais com Prophet.
 
-## Conjunto de Dados
+O projeto foi dividido em duas etapas principais: uma Análise Exploratória de Dados (EDA), voltada para compreensão do comportamento da demanda e validação de hipóteses, seguida da construção e aprimoramento de modelos preditivos utilizando a biblioteca Prophet.
 
-- Dataset público com registros de uso de bicicletas
-- Granularidade diária após agregação
-- 17.414 observações
-- Variável alvo: contagem diária de bicicletas
-- Variáveis disponíveis:
-  - Temperatura
-  - Sensação térmica
-  - Umidade
-  - Velocidade do vento
-  - Condições climáticas
-  - Estação do ano
-  - Indicadores de feriado e final de semana
-
-Os dados foram tratados para remoção de duplicatas e preenchimento de valores ausentes antes da etapa de análise.
+Todo o projeto foi desenvolvido em Python utilizando bibliotecas especializadas em análise de dados, visualização, estatística e modelagem de séries temporais.
 
 ---
 
-## Análise Exploratória dos Dados
+# Objetivos
 
-A análise exploratória foi conduzida para compreender a estrutura, variabilidade e os principais fatores associados à demanda por bicicletas. As etapas incluem:
-
-- Análise estatística descritiva para avaliar escala, dispersão e assimetria
-- Histogramas para investigar a distribuição das variáveis climáticas e da demanda
-- Gráficos de dispersão para avaliar a relação entre clima e uso de bicicletas
-- Análise de correlação entre variáveis numéricas
-- Agregações por condição climática e estação do ano
-- Comparação da demanda em feriados, finais de semana e dias úteis
-- Teste estatístico de Mann–Whitney para verificar diferenças significativas entre estações
-
-Os resultados indicam alta variabilidade na demanda diária, presença de sazonalidade anual bem definida e sensibilidade às condições climáticas, especialmente à temperatura.
+- Realizar a limpeza e preparação dos dados;
+- Explorar o comportamento das variáveis do conjunto de dados;
+- Formular e validar hipóteses estatísticas;
+- Identificar fatores que influenciam a demanda por bicicletas;
+- Desenvolver modelos de previsão utilizando Prophet;
+- Comparar diferentes estratégias de modelagem;
+- Avaliar os modelos utilizando RMSE;
+- Interpretar os resultados sob uma perspectiva de negócio.
 
 ---
 
-## Abordagem de Modelagem
+# Dataset
 
-A modelagem foi realizada utilizando o Prophet, um modelo de séries temporais voltado para dados com tendência e sazonalidade. O pipeline de modelagem inclui:
+O conjunto de dados utilizado contém informações diárias sobre o sistema de compartilhamento de bicicletas, incluindo variáveis climáticas, temporais e a quantidade de bicicletas alugadas.
 
-1. Modelo Prophet básico como baseline
-2. Modelo Prophet com sazonalidade anual explicitamente habilitada
-3. Detecção de outliers com base nos intervalos de confiança do Prophet
-4. Re-treinamento do modelo após a remoção de valores extremos
-5. Divisão temporal dos dados em treino e teste (80/20)
+As principais variáveis analisadas incluem:
 
-Essa abordagem permite avaliar incrementalmente o impacto das escolhas de modelagem sobre o desempenho do modelo.
+- Data
+- Temperatura
+- Sensação térmica
+- Umidade
+- Velocidade do vento
+- Estação do ano
+- Condições climáticas
+- Quantidade de bicicletas alugadas
 
----
-
-## Resultados
-
-O desempenho dos modelos foi avaliado utilizando as métricas Mean Squared Error (MSE) e Root Mean Squared Error (RMSE):
-
-| Modelo | RMSE |
-|------|------|
-| Prophet básico | ~21.454 |
-| Prophet com sazonalidade anual | ~6.233 |
-| Prophet sem outliers | ~3.744 |
-
-O modelo final apresentou uma redução superior a 80% no erro em relação ao baseline, evidenciando a importância da sazonalidade anual e do tratamento de outliers para a previsão de demanda.
+> **Observação:** O dataset foi disponibilizado durante o curso de Data Science da Alura e, por questões de licença, não está incluído neste repositório.
 
 ---
 
-## Interpretação dos Resultados
-
-- O modelo baseline captura a tendência geral, mas não representa adequadamente os padrões sazonais
-- A inclusão explícita da sazonalidade anual permite ao modelo aprender ciclos recorrentes da demanda
-- A remoção de outliers melhora a capacidade do modelo de prever o comportamento típico da série
-- O erro residual está associado à variabilidade inerente ao comportamento humano e às condições climáticas
-
-Considerando a escala e a variabilidade dos dados, o RMSE final é compatível com problemas reais de previsão de demanda.
-
----
-
-## Limitações
-
-- O modelo não incorpora variáveis exógenas futuras, como previsões meteorológicas
-- Eventos extremos não são previstos explicitamente
-- O foco da previsão está no comportamento típico da demanda, e não em anomalias raras
-
----
-
-## Tecnologias Utilizadas
+# Tecnologias utilizadas
 
 - Python
-- pandas, numpy
-- matplotlib, seaborn
+- Pandas
+- NumPy
+- Matplotlib
+- Seaborn
+- SciPy
+- Statsmodels
 - Prophet
-- scikit-learn
-- scipy
-- plotly
+- Scikit-Learn
+- Jupyter Notebook
 
 ---
 
-## Como Executar o Projeto
+# Etapas do projeto
+
+O projeto foi desenvolvido em duas etapas complementares.
+
+## Parte 1 — Análise Exploratória de Dados
+
+Nesta etapa foram realizadas:
+
+- Limpeza dos dados;
+- Tratamento de variáveis;
+- Estatística descritiva;
+- Visualizações gráficas;
+- Formulação de hipóteses;
+- Aplicação de testes estatísticos;
+- Interpretação dos resultados.
+
+## Parte 2 — Modelagem com Prophet
+
+Após compreender o comportamento dos dados, foram desenvolvidos diferentes modelos utilizando Prophet, incluindo:
+
+- Modelo inicial;
+- Ajustes de sazonalidade;
+- Tratamento de outliers;
+- Comparação entre diferentes estratégias de modelagem;
+- Avaliação utilizando RMSE.
+
+---
+
+# Principais análises realizadas
+
+Durante a Análise Exploratória de Dados foram investigadas diversas relações entre as variáveis do conjunto de dados, incluindo:
+
+- Influência da temperatura na demanda;
+- Relação entre sensação térmica e quantidade de bicicletas alugadas;
+- Impacto da umidade;
+- Impacto da velocidade do vento;
+- Diferenças entre dias úteis e finais de semana;
+- Influência das estações do ano;
+- Comportamento temporal da demanda;
+- Validação das hipóteses utilizando testes estatísticos.
+
+---
+
+# Modelagem e avaliação
+
+A etapa de modelagem utilizou Prophet para construir modelos de previsão capazes de capturar tendências e sazonalidades presentes na série temporal.
+
+Ao longo do projeto foram avaliadas diferentes estratégias de modelagem, incluindo ajustes sucessivos no modelo e comparação entre seus desempenhos.
+
+A qualidade preditiva foi avaliada utilizando a métrica RMSE, permitindo comparar objetivamente os modelos desenvolvidos.
+
+---
+
+# Principais conclusões
+
+A análise demonstrou que fatores climáticos exercem influência significativa sobre a demanda por bicicletas compartilhadas.
+
+Temperatura e sensação térmica apresentaram associação positiva com a quantidade de bicicletas alugadas, enquanto a umidade apresentou associação negativa.
+
+Os modelos desenvolvidos utilizando Prophet conseguiram representar adequadamente o comportamento da série temporal e os ajustes realizados ao longo do projeto contribuíram para melhorar a capacidade preditiva em relação ao modelo inicial.
+
+Os resultados obtidos demonstram como técnicas de análise exploratória, estatística e séries temporais podem apoiar processos de planejamento operacional e tomada de decisão.
+
+---
+
+# Estrutura do repositório
+
+```
+bike-sharing-demand-forecast
+│
+├── README.md
+├── LICENSE
+├── requirements.txt
+├── .gitignore
+├── EDA_Bike_Sharing.ipynb
+└── Forecast_Prophet.ipynb
+```
+
+---
+
+# Como executar
+
+Clone o repositório:
+
+```bash
+git clone https://github.com/guimalucas/bike-sharing-demand-forecast.git
+```
 
 Instale as dependências:
 
 ```bash
 pip install -r requirements.txt
+```
+
+Como o dataset não está incluído neste repositório, será necessário obtê-lo e atualizar o caminho do arquivo utilizado nos notebooks.
+
+Após isso, basta abrir os notebooks no Jupyter Notebook ou Google Colab e executar as células em sequência.
+
+---
+
+# Competências Demonstradas
+
+Ao longo deste projeto foram aplicadas competências relacionadas à Ciência de Dados, incluindo:
+
+- Limpeza e preparação de dados;
+- Análise Exploratória de Dados (EDA);
+- Estatística descritiva;
+- Formulação e validação de hipóteses;
+- Testes estatísticos;
+- Visualização de dados;
+- Séries temporais;
+- Modelagem com Prophet;
+- Avaliação de modelos;
+- Interpretação de resultados;
+- Comunicação de insights.
+
+---
+
+# Autor
+
+Lucas Guimarães
+
+Estudante de Engenharia da Computação – FIAP
+
+GitHub: https://github.com/guimalucas
