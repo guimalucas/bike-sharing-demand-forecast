@@ -14,8 +14,9 @@ Análise de uma série horária de empréstimos de bicicletas e previsão da **d
 | Método escolhido pela validação | Prophet com sazonalidade anual |
 | RMSE no teste reservado | **6.160,98 viagens/dia** |
 | MAE no teste reservado | **4.937,92 viagens/dia** |
+| RMSE da referência no mesmo teste | 13.849,16 viagens/dia |
 
-A validação escolheu o Prophet anual (RMSE 6.605,41). No mesmo recorte, a referência que repete o último valor por dia da semana teve RMSE 9.549,77. O teste final foi consultado **após** escolher o método. Os números foram obtidos executando `forecast.py` com a fonte fixada no commit indicado abaixo; podem variar um pouco conforme a versão do Prophet.
+A validação escolheu o Prophet anual (RMSE 6.605,41). No mesmo recorte, a referência que repete o último valor por dia da semana teve RMSE 9.549,77. O teste final foi consultado **após** escolher o método; a referência também foi avaliada no teste para dar escala ao resultado. Os números foram obtidos executando `forecast.py` com a fonte fixada no commit indicado abaixo; podem variar um pouco conforme a versão do Prophet.
 
 ## Dados e decisões
 

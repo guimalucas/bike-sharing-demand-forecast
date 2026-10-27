@@ -74,8 +74,10 @@ def experimento(serie: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     tabela = pd.DataFrame(linhas).sort_values("RMSE").reset_index(drop=True)
     vencedor = tabela.loc[0, "modelo"]
     previsao_teste, removidos = prever(vencedor, treino, teste)
+    previsao_referencia, _ = prever(METHODS[0], treino, teste)
     resultado = {
         "modelo": vencedor, "teste": pontuar(teste["y"], previsao_teste),
+        "referencia_teste": pontuar(teste["y"], previsao_referencia),
         "previsoes": teste.assign(yhat=previsao_teste),
         "outliers_removidos_no_treino": removidos,
         "tamanhos": (len(desenvolvimento), len(validacao), len(treino), len(teste)),
@@ -94,6 +96,9 @@ def main() -> None:
     print("\nValidação (escolha do modelo):\n", tabela.to_string(index=False, float_format=lambda n: f"{n:.2f}"))
     print(f"\nModelo selecionado: {resultado['modelo']}")
     print("Teste final: " + ", ".join(f"{k}={v:.2f}" for k, v in resultado["teste"].items()))
+    print("Referência no teste: " + ", ".join(
+        f"{k}={v:.2f}" for k, v in resultado["referencia_teste"].items()
+    ))
 
 
 if __name__ == "__main__":
