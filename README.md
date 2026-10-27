@@ -1,186 +1,55 @@
-# Previsão da Demanda de Bicicletas com Séries Temporais
+# Previsão de demanda de bicicletas
 
-## Sobre o projeto
+Análise de uma série horária de empréstimos de bicicletas e previsão da **demanda diária** com validação cronológica. O foco é demonstrar tratamento da qualidade dos dados, comparação com uma referência simples e avaliação fora da amostra.
 
-A previsão da demanda é um dos principais desafios enfrentados por serviços de compartilhamento de bicicletas, pois influencia diretamente o planejamento operacional, a distribuição das bicicletas e a qualidade do serviço oferecido aos usuários.
+## Resultado reproduzido
 
-O objetivo deste projeto é analisar os fatores que influenciam a demanda diária por bicicletas compartilhadas e desenvolver modelos de previsão utilizando séries temporais com Prophet.
+| Etapa | Resultado |
+|---|---:|
+| Registros horários na fonte | 17.429 |
+| Duplicatas exatas | 15 |
+| Dias incompletos excluídos | 34 de 730 |
+| Dias usados | 696 |
+| Desenvolvimento / validação / teste | 466 / 90 / 140 |
+| Método escolhido pela validação | Prophet com sazonalidade anual |
+| RMSE no teste reservado | **6.160,98 viagens/dia** |
+| MAE no teste reservado | **4.937,92 viagens/dia** |
+| RMSE da referência no mesmo teste | 13.849,16 viagens/dia |
 
-O projeto foi dividido em duas etapas principais: uma Análise Exploratória de Dados (EDA), voltada para compreensão do comportamento da demanda e validação de hipóteses, seguida da construção e aprimoramento de modelos preditivos utilizando a biblioteca Prophet.
+A validação escolheu o Prophet anual (RMSE 6.605,41). No mesmo recorte, a referência que repete o último valor por dia da semana teve RMSE 9.549,77. O teste final foi consultado **após** escolher o método; a referência também foi avaliada no teste para dar escala ao resultado. Os números foram obtidos executando `forecast.py` com a fonte fixada no commit indicado abaixo; podem variar um pouco conforme a versão do Prophet.
 
-Todo o projeto foi desenvolvido em Python utilizando bibliotecas especializadas em análise de dados, visualização, estatística e modelagem de séries temporais.
+## Dados e decisões
 
----
+Fonte: [`bicicletas.csv` no repositório educacional da Alura](https://github.com/alura-cursos/data_science_projeto/blob/2015d5713c3cdbc1ee78cdc93d9a833b1cc59eeb/Dados/bicicletas.csv), commit `2015d5713c3cdbc1ee78cdc93d9a833b1cc59eeb`. O CSV é lido diretamente da origem e não é redistribuído aqui. O período vai de 04/01/2015 a 03/01/2017.
 
-# Objetivos
+Após remover duplicatas, 34 dias têm menos de 24 medições. Não é correto comparar uma soma parcial com um total diário completo, por isso esses dias são excluídos da modelagem. A exclusão pode introduzir viés; o notebook de exploração mostra essa decisão. Variáveis climáticas ajudam na exploração, mas **não** entram como regressores no modelo de previsão.
 
-- Realizar a limpeza e preparação dos dados;
-- Explorar o comportamento das variáveis do conjunto de dados;
-- Formular e validar hipóteses estatísticas;
-- Identificar fatores que influenciam a demanda por bicicletas;
-- Desenvolver modelos de previsão utilizando Prophet;
-- Comparar diferentes estratégias de modelagem;
-- Avaliar os modelos utilizando RMSE;
-- Interpretar os resultados sob uma perspectiva de negócio.
+Os 20% finais dos dias completos são reservados para teste. Do trecho anterior, os 90 dias finais servem como validação. Comparamos a referência ingênua, Prophet padrão, Prophet anual e Prophet anual após tratamento de outliers apenas no treino. O método com menor RMSE de validação é reajustado no treino total e avaliado uma vez no teste.
 
----
-
-# Dataset
-
-O conjunto de dados utilizado contém informações diárias sobre o sistema de compartilhamento de bicicletas, incluindo variáveis climáticas, temporais e a quantidade de bicicletas alugadas.
-
-As principais variáveis analisadas incluem:
-
-- Data
-- Temperatura
-- Sensação térmica
-- Umidade
-- Velocidade do vento
-- Estação do ano
-- Condições climáticas
-- Quantidade de bicicletas alugadas
-
-> **Observação:** O dataset foi disponibilizado durante o curso de Data Science da Alura e, por questões de licença, não está incluído neste repositório.
-
----
-
-# Tecnologias utilizadas
-
-- Python
-- Pandas
-- NumPy
-- Matplotlib
-- Seaborn
-- SciPy
-- Statsmodels
-- Prophet
-- Scikit-Learn
-- Jupyter Notebook
-
----
-
-# Etapas do projeto
-
-O projeto foi desenvolvido em duas etapas complementares.
-
-## Parte 1 — Análise Exploratória de Dados
-
-Nesta etapa foram realizadas:
-
-- Limpeza dos dados;
-- Tratamento de variáveis;
-- Estatística descritiva;
-- Visualizações gráficas;
-- Formulação de hipóteses;
-- Aplicação de testes estatísticos;
-- Interpretação dos resultados.
-
-## Parte 2 — Modelagem com Prophet
-
-Após compreender o comportamento dos dados, foram desenvolvidos diferentes modelos utilizando Prophet, incluindo:
-
-- Modelo inicial;
-- Ajustes de sazonalidade;
-- Tratamento de outliers;
-- Comparação entre diferentes estratégias de modelagem;
-- Avaliação utilizando RMSE.
-
----
-
-# Principais análises realizadas
-
-Durante a Análise Exploratória de Dados foram investigadas diversas relações entre as variáveis do conjunto de dados, incluindo:
-
-- Influência da temperatura na demanda;
-- Relação entre sensação térmica e quantidade de bicicletas alugadas;
-- Impacto da umidade;
-- Impacto da velocidade do vento;
-- Diferenças entre dias úteis e finais de semana;
-- Influência das estações do ano;
-- Comportamento temporal da demanda;
-- Validação das hipóteses utilizando testes estatísticos.
-
----
-
-# Modelagem e avaliação
-
-A etapa de modelagem utilizou Prophet para construir modelos de previsão capazes de capturar tendências e sazonalidades presentes na série temporal.
-
-Ao longo do projeto foram avaliadas diferentes estratégias de modelagem, incluindo ajustes sucessivos no modelo e comparação entre seus desempenhos.
-
-A qualidade preditiva foi avaliada utilizando a métrica RMSE, permitindo comparar objetivamente os modelos desenvolvidos.
-
----
-
-# Principais conclusões
-
-A análise demonstrou que fatores climáticos exercem influência significativa sobre a demanda por bicicletas compartilhadas.
-
-Temperatura e sensação térmica apresentaram associação positiva com a quantidade de bicicletas alugadas, enquanto a umidade apresentou associação negativa.
-
-Os modelos desenvolvidos utilizando Prophet conseguiram representar adequadamente o comportamento da série temporal e os ajustes realizados ao longo do projeto contribuíram para melhorar a capacidade preditiva em relação ao modelo inicial.
-
-Os resultados obtidos demonstram como técnicas de análise exploratória, estatística e séries temporais podem apoiar processos de planejamento operacional e tomada de decisão.
-
----
-
-# Estrutura do repositório
-
-```
-bike-sharing-demand-forecast
-│
-├── README.md
-├── LICENSE
-├── requirements.txt
-├── .gitignore
-├── EDA_Bike_Sharing.ipynb
-└── Forecast_Prophet.ipynb
-```
-
----
-
-# Como executar
-
-Clone o repositório:
+## Como executar
 
 ```bash
 git clone https://github.com/guimalucas/bike-sharing-demand-forecast.git
-```
-
-Instale as dependências:
-
-```bash
+cd bike-sharing-demand-forecast
+python -m venv .venv
+# Ative o ambiente virtual no seu sistema
 pip install -r requirements.txt
+python forecast.py
+python -m unittest discover -s tests -v
+jupyter notebook
 ```
 
-Como o dataset não está incluído neste repositório, será necessário obtê-lo e atualizar o caminho do arquivo utilizado nos notebooks.
+Abra [a exploração](EDA_Bike_Sharing.ipynb) e [a previsão](Forecast_Prophet.ipynb) a partir da raiz do projeto. A execução padrão requer internet para baixar o CSV. Também é possível passar uma cópia local por `python forecast.py --data caminho/para/bicicletas.csv`.
 
-Após isso, basta abrir os notebooks no Jupyter Notebook ou Google Colab e executar as células em sequência.
+## Estrutura
 
----
+- [`forecast.py`](forecast.py): preparação, divisão temporal, comparação e teste final.
+- [`EDA_Bike_Sharing.ipynb`](EDA_Bike_Sharing.ipynb): qualidade dos dados e padrões descritivos.
+- [`Forecast_Prophet.ipynb`](Forecast_Prophet.ipynb): tabela gerada pelo experimento e visualização do teste.
+- [`tests/`](tests/): casos de duplicação, dias incompletos e ordem das divisões.
 
-# Competências Demonstradas
+## Limitações
 
-Ao longo deste projeto foram aplicadas competências relacionadas à Ciência de Dados, incluindo:
+O teste representa apenas um período histórico. O Prophet com sazonalidade anual foi ajustado com menos de dois anos de dados e sua decomposição pode ser instável. A próxima avaliação deveria usar mais histórico e várias janelas temporais. Não há evidência aqui de que clima *cause* mudanças na demanda, nem de que o erro do teste se repetiria em operação.
 
-- Limpeza e preparação de dados;
-- Análise Exploratória de Dados (EDA);
-- Estatística descritiva;
-- Formulação e validação de hipóteses;
-- Testes estatísticos;
-- Visualização de dados;
-- Séries temporais;
-- Modelagem com Prophet;
-- Avaliação de modelos;
-- Interpretação de resultados;
-- Comunicação de insights.
-
----
-
-# Autor
-
-Lucas Guimarães
-
-Estudante de Engenharia da Computação – FIAP
-
-GitHub: https://github.com/guimalucas
+**Autor:** Lucas Guimarães · Engenharia da Computação, FIAP
