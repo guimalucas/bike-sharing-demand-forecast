@@ -2,7 +2,9 @@ import unittest
 
 import pandas as pd
 
-from forecast import dividir, preparar_dados
+import numpy as np
+
+from forecast import dividir, pontuar, preparar_dados, prever, validacao_historica
 
 
 class ForecastTests(unittest.TestCase):
@@ -22,6 +24,36 @@ class ForecastTests(unittest.TestCase):
         self.assertLess(desenvolvimento["ds"].max(), validacao["ds"].min())
         self.assertLess(validacao["ds"].max(), teste["ds"].min())
         self.assertEqual(len(treino) + len(teste), len(serie))
+
+    def test_historical_windows_never_use_reserved_test_or_future_values(self):
+        serie = pd.DataFrame({"ds": pd.date_range("2020-01-01", periods=700),
+                              "y": np.arange(700, dtype=float)})
+        observado = []
+
+        def preditor(metodo, treino, janela):
+            observado.append((treino["ds"].max(), janela["ds"].min(), janela["ds"].max()))
+            return np.repeat(treino["y"].iloc[-1], len(janela)), 0
+
+        resultado = validacao_historica(
+            serie, horizonte=90, cortes=(366, 416, 470),
+            metodos=("referencia",), preditor=preditor,
+        )
+        teste_inicio = serie.iloc[int(len(serie) * 0.8)]["ds"]
+        self.assertEqual(len(resultado), 3)
+        self.assertTrue(all(a < b <= c < teste_inicio for a, b, c in observado))
+        self.assertAlmostEqual(pontuar(np.array([10, 20]), np.array([8, 22]))["WAPE"], 4 / 30)
+
+        with self.assertRaises(ValueError):
+            validacao_historica(serie, horizonte=90, cortes=(500,), preditor=preditor)
+
+    def test_prophet_forecast_runs_on_a_small_known_series(self):
+        treino = pd.DataFrame({"ds": pd.date_range("2020-01-01", periods=400),
+                               "y": 100 + np.arange(400) * 0.1})
+        datas = pd.DataFrame({"ds": pd.date_range("2021-02-04", periods=7)})
+        previsao, removidos = prever("prophet_anual", treino, datas)
+        self.assertEqual(len(previsao), len(datas))
+        self.assertTrue(np.isfinite(previsao).all())
+        self.assertEqual(removidos, 0)
 
 
 if __name__ == "__main__":

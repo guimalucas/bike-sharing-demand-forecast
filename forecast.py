@@ -5,7 +5,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from prophet import Prophet
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 DATA_URL = "https://raw.githubusercontent.com/alura-cursos/data_science_projeto/2015d5713c3cdbc1ee78cdc93d9a833b1cc59eeb/Dados/bicicletas.csv"
@@ -42,6 +41,9 @@ def prever(metodo: str, treino: pd.DataFrame, datas: pd.DataFrame) -> tuple[np.n
         return datas["ds"].dt.dayofweek.map(ultimos).to_numpy(), 0
     if metodo not in METHODS:
         raise ValueError(f"Método desconhecido: {metodo}")
+    # A preparação e os testes de divisão temporal não dependem do Prophet.
+    from prophet import Prophet
+
     anual = metodo != "prophet_padrao"
     modelo = Prophet(yearly_seasonality=anual, weekly_seasonality=True)
     modelo.fit(treino[["ds", "y"]])
@@ -58,10 +60,50 @@ def prever(metodo: str, treino: pd.DataFrame, datas: pd.DataFrame) -> tuple[np.n
 
 
 def pontuar(real: pd.Series, previsto: np.ndarray) -> dict:
+    denominador = np.abs(real).sum()
     return {
         "RMSE": float(np.sqrt(mean_squared_error(real, previsto))),
         "MAE": float(mean_absolute_error(real, previsto)),
+        "WAPE": float(np.abs(real - previsto).sum() / denominador) if denominador else float("nan"),
     }
+
+
+def validacao_historica(
+    serie: pd.DataFrame, horizonte: int = 90, cortes: tuple[int, ...] | None = None,
+    metodos: tuple[str, ...] = METHODS, preditor=None,
+) -> pd.DataFrame:
+    """Repete a previsão em datas anteriores ao teste reservado, sem acessar o futuro.
+
+    Cada janela contém `horizonte` dias *completos* da série, que pode ter
+    lacunas no calendário por causa dos dias excluídos na preparação.
+    """
+    _, _, historico, teste = dividir(serie, validacao=horizonte)
+    ultimo_corte = len(historico) - horizonte
+    if cortes is None:
+        cortes = tuple(range(366, ultimo_corte + 1, 50))
+        if ultimo_corte > 365 and ultimo_corte not in cortes:
+            cortes += (ultimo_corte,)
+    if not cortes or any(c <= 365 or c > ultimo_corte for c in cortes):
+        raise ValueError("Cada corte precisa de mais de 365 dias anteriores e horizonte completo.")
+
+    preditor = preditor or prever
+    linhas = []
+    for corte in cortes:
+        treino = historico.iloc[:corte]
+        janela = historico.iloc[corte:corte + horizonte]
+        assert treino["ds"].max() < janela["ds"].min()
+        assert janela["ds"].max() < teste["ds"].min()
+        for metodo in metodos:
+            previsao, removidos = preditor(metodo, treino, janela)
+            linhas.append({
+                "corte": treino["ds"].max().date(),
+                "janela_inicio": janela["ds"].min().date(),
+                "janela_fim": janela["ds"].max().date(),
+                "modelo": metodo,
+                **pontuar(janela["y"].to_numpy(), previsao),
+                "outliers_removidos": removidos,
+            })
+    return pd.DataFrame(linhas)
 
 
 def experimento(serie: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
@@ -88,6 +130,7 @@ def experimento(serie: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", default=DATA_URL, help="CSV local ou URL de origem da Alura")
+    parser.add_argument("--backtest", action="store_true", help="Avaliar também janelas históricas anteriores ao teste")
     args = parser.parse_args()
     serie, incompletos = preparar_dados(pd.read_csv(args.data))
     tabela, resultado = experimento(serie)
@@ -99,6 +142,12 @@ def main() -> None:
     print("Referência no teste: " + ", ".join(
         f"{k}={v:.2f}" for k, v in resultado["referencia_teste"].items()
     ))
+    if args.backtest:
+        historico = validacao_historica(serie)
+        print("\nDiagnóstico histórico (fora do teste reservado):")
+        print(historico[["corte", "modelo", "RMSE", "MAE", "WAPE"]].to_string(
+            index=False, float_format=lambda n: f"{n:.2f}"
+        ))
 
 
 if __name__ == "__main__":
