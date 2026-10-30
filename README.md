@@ -1,8 +1,8 @@
 # Previsão de demanda de bicicletas
 
-Análise de uma série horária de empréstimos de bicicletas e previsão da **demanda diária** com validação cronológica. O foco é demonstrar tratamento da qualidade dos dados, comparação com uma referência simples e avaliação fora da amostra.
+Parti de registros horários de bicicletas, consolidei os dias completos e comparei previsões da **demanda diária**. A escolha do modelo usa dados anteriores ao período de teste; o [notebook de exploração](EDA_Bike_Sharing.ipynb) mostra o preparo da série e o [de previsão](Forecast_Prophet.ipynb) reúne os gráficos e erros.
 
-## Resultado reproduzido
+## Resultados
 
 | Etapa | Resultado |
 |---|---:|
@@ -19,11 +19,11 @@ Análise de uma série horária de empréstimos de bicicletas e previsão da **d
 | WAPE da referência sazonal | 22% da demanda observada |
 | RMSE da referência semanal fixa | 13.849,16 viagens/dia |
 
-A validação escolheu o Prophet anual (RMSE 6.605,41). Nesse recorte, a referência de **52 semanas** teve RMSE 9.133,07 e a referência semanal fixa, 9.549,77. O teste final foi consultado **após** escolher o método; ambas as referências foram avaliadas nele para dar escala ao resultado. Os números foram obtidos executando `forecast.py` com a fonte fixada no commit indicado abaixo; podem variar um pouco conforme a versão do Prophet.
+A validação escolheu o Prophet anual (RMSE 6.605,41). No mesmo período, a referência de **52 semanas** teve RMSE 9.133,07 e a semanal fixa, 9.549,77. Reajustei o método escolhido com o histórico disponível e só então medi o erro nos 140 dias reservados. Os valores da tabela vêm de [`forecast.py`](forecast.py) com a versão do CSV indicada abaixo; pequenas diferenças são possíveis entre versões do Prophet.
 
-### Diagnóstico em datas anteriores ao teste
+### Comparação em três datas
 
-Repeti previsões de 90 dias completos com três cortes no histórico **anterior ao teste**. O RMSE (viagens/dia) não depende de consultar os 140 dias reservados:
+Também repeti a previsão a partir de três datas anteriores ao teste, sempre olhando os 90 dias completos seguintes. O RMSE abaixo está em viagens por dia:
 
 | Última data de treino | Semanal fixa | 52 semanas | Prophet padrão | Prophet anual | Anual sem outliers |
 |---|---:|---:|---:|---:|---:|
@@ -31,15 +31,15 @@ Repeti previsões de 90 dias completos com três cortes no histórico **anterior
 | 15/03/2016 | 9.593 | 7.110 | 13.788 | **6.439** | 6.780 |
 | 07/05/2016 | 9.550 | 9.133 | 6.992 | **6.605** | 6.610 |
 
-O Prophet anual superou **as duas referências** nos três cortes. A remoção de outliers venceu apenas no primeiro; o Prophet padrão ficou pior que as referências nos dois primeiros. As janelas se sobrepõem e não representam três testes independentes. A tabela serve para verificar a sensibilidade à data de corte, sem reescolher o método com base no teste final.
+O Prophet anual superou **as duas referências** nos três cortes. Remover outliers ajudou no primeiro corte e piorou os outros dois. As janelas de 90 dias se sobrepõem; a tabela mostra a variação entre datas, não três testes independentes.
 
 ## Dados e decisões
 
 Fonte: [`bicicletas.csv` no repositório educacional da Alura](https://github.com/alura-cursos/data_science_projeto/blob/2015d5713c3cdbc1ee78cdc93d9a833b1cc59eeb/Dados/bicicletas.csv), commit `2015d5713c3cdbc1ee78cdc93d9a833b1cc59eeb`. O CSV é lido diretamente da origem e não é redistribuído aqui. O período vai de 04/01/2015 a 03/01/2017.
 
-Após remover duplicatas, 34 dias têm menos de 24 medições. Não é correto comparar uma soma parcial com um total diário completo, por isso esses dias são excluídos da modelagem. A exclusão pode introduzir viés; o notebook de exploração mostra essa decisão. Variáveis climáticas ajudam na exploração, mas **não** entram como regressores no modelo de previsão.
+Após remover duplicatas, encontrei 34 dias com menos de 24 medições. Retirei esses dias antes de somar a demanda diária; a série usada ficou com 696 dias. Essa escolha altera a amostra, como mostra o notebook de exploração. Clima aparece nos gráficos exploratórios e **não** entra nos modelos de previsão.
 
-Os 20% finais dos dias completos são reservados para teste. Do trecho anterior, os 90 dias finais servem como validação. Comparamos duas referências sem dados futuros: a primeira repete o último valor observado por dia da semana, fixo em todo o horizonte; a segunda usa o valor do mesmo dia da semana **52 semanas antes**. Quando a data correspondente foi excluída como incompleta, a segunda recorre ao último valor disponível daquele dia da semana (10 de 140 dias no teste). Também comparamos Prophet padrão, Prophet anual e Prophet anual após tratamento de outliers apenas no treino. O método com menor RMSE de validação é reajustado no treino total e avaliado uma vez no teste. A WAPE é a soma dos erros absolutos dividida pela demanda total observada no período.
+Reservei os 20% finais dos dias completos para teste e usei os 90 dias anteriores para escolher o método. Uma referência repete o último valor observado de cada dia da semana; a outra consulta o mesmo dia da semana **52 semanas antes**. Se o dia correspondente não existe na série, uso o último valor conhecido daquele dia da semana (aconteceu em 10 dos 140 dias de teste). Comparei as duas com Prophet padrão, Prophet anual e Prophet anual com outliers removidos **apenas do treino**. A WAPE soma os erros absolutos e divide pela demanda observada no período. A sazonalidade anual foi ajustada com menos de dois anos de histórico.
 
 ## Como executar
 
@@ -63,9 +63,5 @@ Abra [a exploração](EDA_Bike_Sharing.ipynb) e [a previsão](Forecast_Prophet.i
 - [`EDA_Bike_Sharing.ipynb`](EDA_Bike_Sharing.ipynb): qualidade dos dados e padrões descritivos.
 - [`Forecast_Prophet.ipynb`](Forecast_Prophet.ipynb): escolha do modelo, diagnóstico em três cortes e visualização do teste.
 - [`tests/`](tests/): casos de duplicação, dias incompletos e ordem das divisões.
-
-## Limitações
-
-O teste representa apenas um período histórico; os três cortes de diagnóstico têm janelas sobrepostas e abrangem menos de dois anos de dados. A decomposição anual do Prophet pode ser instável com esse histórico. A referência sazonal de 52 semanas é mais competitiva que a semanal fixa, mas também depende de poucos anos e de uma regra de recuo para dias incompletos. Uma próxima avaliação deveria usar mais anos. Não há evidência aqui de que clima *cause* mudanças na demanda, nem de que o erro do teste se repetiria em operação.
 
 **Autor:** Lucas Guimarães · Engenharia da Computação, FIAP
