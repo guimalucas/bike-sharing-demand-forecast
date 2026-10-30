@@ -55,6 +55,22 @@ class ForecastTests(unittest.TestCase):
         self.assertTrue(np.isfinite(previsao).all())
         self.assertEqual(removidos, 0)
 
+    def test_previous_year_reference_uses_only_known_days_and_fallback(self):
+        treino = pd.DataFrame({"ds": pd.date_range("2020-01-01", periods=400),
+                               "y": np.arange(400, dtype=float)})
+        alvo = treino["ds"].iloc[-1] + pd.Timedelta(days=1)
+        previsto, _ = prever("ano_anterior_52_semanas", treino,
+                            pd.DataFrame({"ds": [alvo]}))
+        esperado = treino.set_index("ds").loc[alvo - pd.Timedelta(weeks=52), "y"]
+        self.assertEqual(previsto[0], esperado)
+
+        ausente = alvo - pd.Timedelta(weeks=52)
+        incompleto = treino.loc[treino["ds"].ne(ausente)]
+        previsto, _ = prever("ano_anterior_52_semanas", incompleto,
+                            pd.DataFrame({"ds": [alvo]}))
+        ultimo = incompleto.loc[incompleto["ds"].dt.dayofweek.eq(alvo.dayofweek), "y"].iloc[-1]
+        self.assertEqual(previsto[0], ultimo)
+
 
 if __name__ == "__main__":
     unittest.main()

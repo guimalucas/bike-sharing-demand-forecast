@@ -8,7 +8,8 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 DATA_URL = "https://raw.githubusercontent.com/alura-cursos/data_science_projeto/2015d5713c3cdbc1ee78cdc93d9a833b1cc59eeb/Dados/bicicletas.csv"
-METHODS = ("ultimo_dia_semana", "prophet_padrao", "prophet_anual", "prophet_anual_sem_outliers")
+METHODS = ("ultimo_dia_semana", "ano_anterior_52_semanas", "prophet_padrao",
+           "prophet_anual", "prophet_anual_sem_outliers")
 
 
 def preparar_dados(dados: pd.DataFrame) -> tuple[pd.DataFrame, int]:
@@ -39,6 +40,12 @@ def prever(metodo: str, treino: pd.DataFrame, datas: pd.DataFrame) -> tuple[np.n
     if metodo == "ultimo_dia_semana":
         ultimos = treino.assign(semana=treino["ds"].dt.dayofweek).groupby("semana")["y"].last()
         return datas["ds"].dt.dayofweek.map(ultimos).to_numpy(), 0
+    if metodo == "ano_anterior_52_semanas":
+        # 52 semanas mantêm o dia da semana; nunca consultamos o período previsto.
+        anterior = (datas["ds"] - pd.Timedelta(weeks=52)).map(treino.set_index("ds")["y"])
+        ultimos = treino.assign(semana=treino["ds"].dt.dayofweek).groupby("semana")["y"].last()
+        fallback = datas["ds"].dt.dayofweek.map(ultimos)
+        return anterior.fillna(fallback).to_numpy(), 0
     if metodo not in METHODS:
         raise ValueError(f"Método desconhecido: {metodo}")
     # A preparação e os testes de divisão temporal não dependem do Prophet.
@@ -116,10 +123,12 @@ def experimento(serie: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     tabela = pd.DataFrame(linhas).sort_values("RMSE").reset_index(drop=True)
     vencedor = tabela.loc[0, "modelo"]
     previsao_teste, removidos = prever(vencedor, treino, teste)
-    previsao_referencia, _ = prever(METHODS[0], treino, teste)
+    previsao_referencia, _ = prever("ano_anterior_52_semanas", treino, teste)
+    previsao_fixa, _ = prever("ultimo_dia_semana", treino, teste)
     resultado = {
         "modelo": vencedor, "teste": pontuar(teste["y"], previsao_teste),
         "referencia_teste": pontuar(teste["y"], previsao_referencia),
+        "referencia_fixa_teste": pontuar(teste["y"], previsao_fixa),
         "previsoes": teste.assign(yhat=previsao_teste),
         "outliers_removidos_no_treino": removidos,
         "tamanhos": (len(desenvolvimento), len(validacao), len(treino), len(teste)),
@@ -139,8 +148,11 @@ def main() -> None:
     print("\nValidação (escolha do modelo):\n", tabela.to_string(index=False, float_format=lambda n: f"{n:.2f}"))
     print(f"\nModelo selecionado: {resultado['modelo']}")
     print("Teste final: " + ", ".join(f"{k}={v:.2f}" for k, v in resultado["teste"].items()))
-    print("Referência no teste: " + ", ".join(
+    print("Referência 52 semanas no teste: " + ", ".join(
         f"{k}={v:.2f}" for k, v in resultado["referencia_teste"].items()
+    ))
+    print("Referência semanal fixa no teste: " + ", ".join(
+        f"{k}={v:.2f}" for k, v in resultado["referencia_fixa_teste"].items()
     ))
     if args.backtest:
         historico = validacao_historica(serie)
